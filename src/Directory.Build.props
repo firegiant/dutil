@@ -14,11 +14,11 @@
     <BaseIntermediateOutputPath>$(BaseOutputPath)obj\$(ProjectName)\</BaseIntermediateOutputPath>
     <OutputPath>$(BaseOutputPath)$(Configuration)\</OutputPath>
 
-    <Authors>WiX Toolset Team</Authors>
-    <Company>WiX Toolset</Company>
-    <Copyright>Copyright (c) .NET Foundation and contributors. All rights reserved.</Copyright>
+    <Authors>FireGiant</Authors>
+    <Company>FireGiant</Company>
+    <Copyright>Copyright (c) FireGiant and .NET Foundation and contributors. All rights reserved.</Copyright>
     <PackageLicenseExpression>MS-RL</PackageLicenseExpression>
-    <Product>WiX Toolset</Product>
+    <Product>FireGiant WiX Toolset</Product>
   </PropertyGroup>
 
   <Import Project="Cpp.Build.props" Condition=" '$(MSBuildProjectExtension)'=='.vcxproj' " />
