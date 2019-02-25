@@ -181,6 +181,7 @@ struct THEME_CONTROL
     THEME_ACTION* pDefaultAction;
 
     // Used by hyperlink and owner-drawn button controls
+    DWORD dwFontDisabledId;
     DWORD dwFontHoverId;
     DWORD dwFontSelectedId;
 

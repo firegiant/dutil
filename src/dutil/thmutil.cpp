@@ -2732,6 +2732,13 @@ static HRESULT ParseControl(
     }
     else if (THEME_CONTROL_TYPE_HYPERLINK == pControl->type || THEME_CONTROL_TYPE_BUTTON == pControl->type)
     {
+        hr = XmlGetAttributeNumber(pixn, L"DisabledFontId", &pControl->dwFontDisabledId);
+        if (S_FALSE == hr)
+        {
+            pControl->dwFontDisabledId = THEME_INVALID_ID;
+        }
+        ExitOnFailure(hr, "Failed when querying control DisabledFontId attribute.");
+
         hr = XmlGetAttributeNumber(pixn, L"HoverFontId", &pControl->dwFontHoverId);
         if (S_FALSE == hr)
         {
@@ -3502,8 +3509,13 @@ static HRESULT DrawButton(
     HBITMAP hDefaultBitmap = static_cast<HBITMAP>(::SelectObject(hdcMem, pControl->hImage ? pControl->hImage : pTheme->hImage));
 
     DWORD_PTR dwStyle = ::GetWindowLongPtrW(pdis->hwndItem, GWL_STYLE);
-    // "clicked" gets priority
-    if (ODS_SELECTED & pdis->itemState)
+    // disabled gets top priority
+    if (WS_DISABLED & dwStyle)
+    {
+        nSourceY += pControl->nHeight * 4;
+    }
+    // then "clicked" 
+    else if (ODS_SELECTED & pdis->itemState)
     {
         nSourceY += pControl->nHeight * 2;
     }
@@ -3552,6 +3564,7 @@ static void DrawControlText(
     DWORD cchText = 0;
     THEME_FONT* pFont = NULL;
     HFONT hfPrev = NULL;
+    COLORREF crPrevious = CLR_INVALID;
 
     if (0 == (cchText = ::GetWindowTextW(pdis->hwndItem, wzText, countof(wzText))))
     {
@@ -3559,7 +3572,12 @@ static void DrawControlText(
         return;
     }
 
-    if (ODS_SELECTED & pdis->itemState)
+    DWORD_PTR dwStyle = ::GetWindowLongPtrW(pdis->hwndItem, GWL_STYLE);
+    if (WS_DISABLED & dwStyle)
+    {
+        pFont = pTheme->rgFonts + (THEME_INVALID_ID != pControl->dwFontDisabledId ? pControl->dwFontDisabledId : pControl->dwFontId);
+    }
+    else if (ODS_SELECTED & pdis->itemState)
     {
         pFont = pTheme->rgFonts + (THEME_INVALID_ID != pControl->dwFontSelectedId ? pControl->dwFontSelectedId : pControl->dwFontId);
     }
@@ -3574,11 +3592,18 @@ static void DrawControlText(
 
     hfPrev = SelectFont(pdis->hDC, pFont->hFont);
 
+    crPrevious = ::SetTextColor(pdis->hDC, pFont->crForeground);
+
     ::DrawTextExW(pdis->hDC, wzText, cchText, &pdis->rcItem, DT_SINGLELINE | (fCentered ? (DT_CENTER | DT_VCENTER) : 0), NULL);
 
     if (fDrawFocusRect && (WS_TABSTOP & ::GetWindowLongPtrW(pdis->hwndItem, GWL_STYLE)) && (ODS_FOCUS & pdis->itemState))
     {
         ::DrawFocusRect(pdis->hDC, &pdis->rcItem);
+    }
+
+    if (CLR_INVALID != crPrevious)
+    {
+        ::SetTextColor(pdis->hDC, crPrevious);
     }
 
     SelectFont(pdis->hDC, hfPrev);
